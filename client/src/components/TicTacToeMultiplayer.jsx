@@ -26,7 +26,6 @@ export default function TicTacToeMultiplayer() {
     newSocket.on("connect", () => {
       setIsConnected(true);
       setError("");
-      console.log("Connected to server");
     });
 
     newSocket.on("disconnect", () => {
@@ -55,7 +54,6 @@ export default function TicTacToeMultiplayer() {
       setMyMark(mark);
       setStatus("Đã tạo phòng");
       setIsLoading(false);
-      console.log('Room created with mark:', mark);
     };
 
     const handleRoomState = (room) => {
@@ -68,7 +66,6 @@ export default function TicTacToeMultiplayer() {
         const currentPlayer = room.players[socket.id];
         if (currentPlayer) {
           setMyMark(currentPlayer.mark);
-          console.log('Updated myMark from room_state:', currentPlayer.mark);
         }
       }
     };
@@ -83,7 +80,6 @@ export default function TicTacToeMultiplayer() {
       const currentPlayer = room.players[socket.id];
       if (currentPlayer) {
         setMyMark(currentPlayer.mark);
-        console.log('Updated myMark from start_game:', currentPlayer.mark);
       }
     };
 
@@ -92,7 +88,6 @@ export default function TicTacToeMultiplayer() {
       const currentPlayer = players[socket.id];
       if (currentPlayer) {
         setMyMark(currentPlayer.mark);
-        console.log('Updated myMark from player_joined:', currentPlayer.mark);
       }
     };
 
@@ -111,7 +106,8 @@ export default function TicTacToeMultiplayer() {
         setVictoryMessage(`🏆 ${result.winner} đã chiến thắng!`);
       }
       setShowVictory(true);
-      setTimeout(() => setShowVictory(false), 3000);
+      createConfetti();
+      setTimeout(() => setShowVictory(false), 4000);
     };
 
     const handleError = (message) => {
@@ -142,13 +138,61 @@ export default function TicTacToeMultiplayer() {
   // Ensure mark is set when game starts
   useEffect(() => {
     if (status === "Game bắt đầu" && !myMark && socket) {
-      // Request current room state to get mark
       if (roomId) {
-        console.log('Requesting room state to get mark...');
         socket.emit('get_room_state', { roomId });
       }
     }
   }, [status, myMark, socket, roomId]);
+
+  // Create confetti effect
+  const createConfetti = () => {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+    
+    // Create multiple confetti pieces
+    for (let i = 0; i < 100; i++) {
+      setTimeout(() => {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        confetti.style.width = (Math.random() * 8 + 6) + 'px';
+        confetti.style.height = (Math.random() * 8 + 6) + 'px';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0%';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+          if (confetti.parentNode) {
+            confetti.parentNode.removeChild(confetti);
+          }
+        }, 5000);
+      }, i * 30);
+    }
+
+    // Add sparkle effect
+    for (let i = 0; i < 20; i++) {
+      setTimeout(() => {
+        const sparkle = document.createElement('div');
+        sparkle.style.position = 'fixed';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.width = '4px';
+        sparkle.style.height = '4px';
+        sparkle.style.backgroundColor = '#fff';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.zIndex = '9998';
+        sparkle.style.animation = 'pulse 0.5s ease-in-out';
+        document.body.appendChild(sparkle);
+        
+        setTimeout(() => {
+          if (sparkle.parentNode) {
+            sparkle.parentNode.removeChild(sparkle);
+          }
+        }, 1000);
+      }, i * 100);
+    }
+  };
 
   const createRoom = useCallback(() => {
     if (!socket || !isConnected) {
@@ -196,7 +240,6 @@ export default function TicTacToeMultiplayer() {
       return;
     }
     
-    console.log('Making move:', { index, myMark, turn, roomId });
     socket.emit("move", { roomId, index });
   }, [socket, isConnected, roomId, myMark, turn, board]);
 
@@ -210,22 +253,7 @@ export default function TicTacToeMultiplayer() {
   }, []);
 
   const canMakeMove = (index) => {
-    const canMove = isConnected && roomId && myMark === turn && !board[index] && !status.includes("thắng") && !status.includes("Hoà");
-    
-    // Debug logging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('canMakeMove debug:', {
-        isConnected,
-        roomId,
-        myMark,
-        turn,
-        boardIndex: board[index],
-        status,
-        canMove
-      });
-    }
-    
-    return canMove;
+    return isConnected && roomId && myMark === turn && !board[index] && !status.includes("thắng") && !status.includes("Hoà");
   };
 
   const isGameActive = () => {
@@ -271,15 +299,26 @@ export default function TicTacToeMultiplayer() {
         {/* Victory Overlay */}
         {showVictory && (
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-20 flex items-center justify-center z-10">
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-20 text-center">
-              <div className="text-4xl mb-4">🎉</div>
-              <h3 className="text-2xl font-bold text-white mb-2">{victoryMessage}</h3>
-              <button 
-                onClick={() => setShowVictory(false)}
-                className="btn btn-primary mt-4"
-              >
-                Đóng
-              </button>
+            <div className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md p-8 rounded-20 text-center victory-content border border-white/20">
+              <div className="text-6xl mb-4 animate-bounce">🎉</div>
+              <h3 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">{victoryMessage}</h3>
+              <div className="text-lg text-white/80 mb-6">
+                {status.includes("thắng") ? "Chúc mừng chiến thắng!" : "Cả hai đều xuất sắc!"}
+              </div>
+              <div className="flex gap-4 justify-center">
+                <button 
+                  onClick={() => setShowVictory(false)}
+                  className="btn btn-primary hover-lift"
+                >
+                  Chơi lại
+                </button>
+                <button 
+                  onClick={resetLocal}
+                  className="btn btn-danger hover-lift"
+                >
+                  Tạo phòng mới
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -376,23 +415,10 @@ export default function TicTacToeMultiplayer() {
           </div>
         </div>
 
-        {/* Debug Info (Development only) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-3 bg-black/20 rounded-lg text-xs">
-            <div className="font-bold mb-2">Debug Info:</div>
-            <div>Connected: {isConnected ? 'Yes' : 'No'}</div>
-            <div>Room ID: {roomId || 'None'}</div>
-            <div>My Mark: {myMark || 'None'}</div>
-            <div>Current Turn: {turn}</div>
-            <div>Status: {status}</div>
-            <div>Can Make Move: {myMark === turn ? 'Yes' : 'No'}</div>
-          </div>
-        )}
-
         {/* Turn Indicator */}
         {isGameActive() && (
           <div className="text-center mb-4">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full turn-indicator ${
               turn === 'X' ? 'bg-blue-500/20 text-blue-300' : 'bg-pink-500/20 text-pink-300'
             }`}>
               <span className="text-lg font-bold">{turn}</span>
