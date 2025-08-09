@@ -20,7 +20,7 @@ Một game Tic-Tac-Toe multiplayer realtime được xây dựng với React, So
 
 ### Bước 1: Clone repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/ducduy2424/TIC-TAC-TOE-REALTIME.git
 cd tic-tac-toe-realtime
 ```
 
@@ -187,5 +187,6 @@ npm start
 5. Tạo Pull Request
 
 ## 📄 License
+
 
 MIT License - xem file LICENSE để biết thêm chi tiết. 
